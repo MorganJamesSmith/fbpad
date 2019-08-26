@@ -1,0 +1,70 @@
+.TH FBPAD 1 fbpad\-VERSION
+.SH NAME
+Fbpad \- small linux framebuffer virtual terminal
+.SH SYNOPSIS
+.B fbpad
+.RB [ command ]
+.SH DESCRIPTION
+.B fbpad
+is a small linux framebuffer virtual terminal.  It manages many
+terminals through single-letter tags; each tag can hold two terminals.
+.SH OPTIONS
+.TP
+.B command
+the command is executed in a terminal, all
+terminal switching commands are disabled, and fbpad exits as soon as the program
+finishes.
+.SH SHORTCUTS
+.TP
+.B Alt-c
+Open a shell
+.TP
+.B Alt-m
+Open the mail program
+.TP
+.B Alt-e
+Open the editor program
+.TP
+.B Alt-x
+Switch to tag 'x'
+.TP
+.B Alt-j or Alt-k
+Switch to current tag's alternative terminal
+.TP
+.B Alt-p
+Show tag summary
+.TP
+.B Alt-o
+Jump to previous tag
+.TP
+.B Alt-tab
+Show the next terminal
+.TP
+.B Alt-s
+Creat a text screenshot
+.TP
+.B Alt-y
+Redraw the terminal
+.TP
+.B Ctrl-Alt-l
+Lock the screen; use PASS to unlock
+.TP
+.B Ctrl-Alt-o
+Disable/enable tag switching
+.TP
+.B Ctrl-Alt-q
+Quit fbpad
+.TP
+.B Alt-,
+Scroll up
+.TP
+.B Alt-.
+Scroll down
+.SH CUSTOMIZATION
+.B fbpad
+can be customized by creating a custom conf.h and (re)compiling the source
+code. This keeps it fast, secure and simple.
+.SH AUTHORS
+See the LICENSE file for the authors.
+.SH LICENSE
+See the LICENSE file for the terms of redistribution.

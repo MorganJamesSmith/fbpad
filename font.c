@@ -25,7 +25,8 @@ struct tinyfont {
 	int rows, cols;	/* glyph dimensions */
 };
 
-static void *xread(int fd, int len)
+static void*
+xread(int fd, int len)
 {
 	void *buf = malloc(len);
 	if (buf && read(fd, buf, len) == len)
@@ -34,7 +35,8 @@ static void *xread(int fd, int len)
 	return NULL;
 }
 
-struct font *font_open(char *path)
+struct font*
+font_open(char *path)
 {
 	struct font *font;
 	struct tinyfont head;
@@ -57,7 +59,8 @@ struct font *font_open(char *path)
 	return font;
 }
 
-static int find_glyph(struct font *font, int c)
+static int
+find_glyph(struct font *font, int c)
 {
 	int l = 0;
 	int h = font->n;
@@ -73,7 +76,8 @@ static int find_glyph(struct font *font, int c)
 	return -1;
 }
 
-int font_bitmap(struct font *font, void *dst, int c)
+int
+font_bitmap(struct font *font, void *dst, int c)
 {
 	int i = find_glyph(font, c);
 	int len = font->rows * font->cols;
@@ -83,7 +87,8 @@ int font_bitmap(struct font *font, void *dst, int c)
 	return 0;
 }
 
-void font_free(struct font *font)
+void
+font_free(struct font *font)
 {
 	if (font->data)
 		free(font->data);
@@ -92,12 +97,14 @@ void font_free(struct font *font)
 	free(font);
 }
 
-int font_rows(struct font *font)
+int
+font_rows(struct font *font)
 {
 	return font->rows;
 }
 
-int font_cols(struct font *font)
+int
+font_cols(struct font *font)
 {
 	return font->cols;
 }

@@ -6,7 +6,8 @@
 
 static void *scrs[NSCRS];
 
-void scr_snap(int idx)
+void
+scr_snap(int idx)
 {
 	int rowsz = FBM_BPP(fb_mode()) * fb_cols();
 	int i;
@@ -17,7 +18,8 @@ void scr_snap(int idx)
 			memcpy(scrs[idx] + i * rowsz, fb_mem(i), rowsz);
 }
 
-void scr_free(int idx)
+void
+scr_free(int idx)
 {
 	if (idx < NSCRS) {
 		free(scrs[idx]);
@@ -25,7 +27,8 @@ void scr_free(int idx)
 	}
 }
 
-int scr_load(int idx)
+int
+scr_load(int idx)
 {
 	int rowsz = FBM_BPP(fb_mode()) * fb_cols();
 	int i;
@@ -35,7 +38,8 @@ int scr_load(int idx)
 	return 0;
 }
 
-void scr_done(void)
+void
+scr_done(void)
 {
 	int i;
 	for (i = 0; i < NSCRS; i++)

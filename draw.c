@@ -20,12 +20,14 @@ static int bpp;				/* bytes per pixel */
 static int nr, ng, nb;			/* color levels */
 static int rl, rr, gl, gr, bl, br;	/* shifts per color */
 
-static int fb_len(void)
+static int
+fb_len(void)
 {
 	return finfo.line_length * vinfo.yres_virtual;
 }
 
-static void fb_cmap_save(int save)
+static void
+fb_cmap_save(int save)
 {
 	static unsigned short red[NLEVELS], green[NLEVELS], blue[NLEVELS];
 	struct fb_cmap cmap;
@@ -40,7 +42,8 @@ static void fb_cmap_save(int save)
 	ioctl(fd, save ? FBIOGETCMAP : FBIOPUTCMAP, &cmap);
 }
 
-void fb_cmap(void)
+void
+fb_cmap(void)
 {
 	unsigned short red[NLEVELS], green[NLEVELS], blue[NLEVELS];
 	struct fb_cmap cmap;
@@ -65,14 +68,16 @@ void fb_cmap(void)
 	ioctl(fd, FBIOPUTCMAP, &cmap);
 }
 
-unsigned fb_mode(void)
+unsigned
+fb_mode(void)
 {
 	return ((rl < gl) << 22) | ((rl < bl) << 21) | ((gl < bl) << 20) |
 		(bpp << 16) | (vinfo.red.length << 8) |
 		(vinfo.green.length << 4) | (vinfo.blue.length);
 }
 
-static void init_colors(void)
+static void
+init_colors(void)
 {
 	nr = 1 << vinfo.red.length;
 	ng = 1 << vinfo.blue.length;
@@ -85,7 +90,8 @@ static void init_colors(void)
 	bl = vinfo.blue.offset;
 }
 
-int fb_init(char *dev)
+int
+fb_init(char *dev)
 {
 	fd = open(dev, O_RDWR);
 	if (fd < 0)
@@ -102,36 +108,41 @@ int fb_init(char *dev)
 	init_colors();
 	fb_cmap_save(1);
 	fb_cmap();
-	return 0;
+	return EXIT_SUCCESS;
 failed:
 	perror("fb_init()");
 	close(fd);
-	return 1;
+	return EXIT_FAILURE;
 }
 
-void fb_free(void)
+void
+fb_free(void)
 {
 	fb_cmap_save(0);
 	munmap(fb, fb_len());
 	close(fd);
 }
 
-int fb_rows(void)
+int
+fb_rows(void)
 {
 	return vinfo.yres;
 }
 
-int fb_cols(void)
+int
+fb_cols(void)
 {
 	return vinfo.xres;
 }
 
-void *fb_mem(int r)
+void*
+fb_mem(int r)
 {
 	return fb + (r + vinfo.yoffset) * finfo.line_length + vinfo.xoffset * bpp;
 }
 
-unsigned fb_val(int r, int g, int b)
+unsigned
+fb_val(int r, int g, int b)
 {
 	return ((r >> rr) << rl) | ((g >> gr) << gl) | ((b >> br) << bl);
 }

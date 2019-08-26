@@ -44,7 +44,8 @@ static unsigned int clr16[16] = {
 	COLOR8, COLOR9, COLORA, COLORB, COLORC, COLORD, COLORE, COLORF,
 };
 
-static int clrmap(int c)
+static int
+clrmap(int c)
 {
 	int g = (c - 232) * 10 + 8;
 	if (c < 16) {
@@ -63,8 +64,8 @@ static int clrmap(int c)
 }
 
 /* low level drawing and lazy updating */
-
-static int fgcolor(void)
+static int
+fgcolor(void)
 {
 	int c = mode & ATTR_REV ? bg : fg;
 	if (mode & ATTR_BOLD)
@@ -74,13 +75,15 @@ static int fgcolor(void)
 	return c;
 }
 
-static int bgcolor(void)
+static int
+bgcolor(void)
 {
 	return mode & ATTR_REV ? fg : bg;
 }
 
 /* assumes visible && !lazy */
-static void _draw_pos(int r, int c, int cursor)
+static void
+_draw_pos(int r, int c, int cursor)
 {
 	int rev = cursor && mode & MODE_CURSOR;
 	int i = OFFSET(r, c);
@@ -90,7 +93,8 @@ static void _draw_pos(int r, int c, int cursor)
 }
 
 /* assumes visible && !lazy */
-static void _draw_row(int r)
+static void
+_draw_row(int r)
 {
 	int cbg, cch;		/* current background and character */
 	int fbg, fsc = -1;	/* filling background and start column */
@@ -113,7 +117,8 @@ static void _draw_row(int r)
 	pad_fill(r, r + 1, fsc >= 0 ? fsc : pad_cols(), -1, cbg & FN_C);
 }
 
-static int candraw(int sr, int er)
+static int
+candraw(int sr, int er)
 {
 	int i;
 	if (lazy)
@@ -122,7 +127,8 @@ static int candraw(int sr, int er)
 	return visible && !lazy;
 }
 
-static void draw_rows(int sr, int er)
+static void
+draw_rows(int sr, int er)
 {
 	int i;
 	if (candraw(sr, er))
@@ -130,7 +136,8 @@ static void draw_rows(int sr, int er)
 			_draw_row(i);
 }
 
-static void draw_cols(int r, int sc, int ec)
+static void
+draw_cols(int r, int sc, int ec)
 {
 	int i;
 	if (candraw(r, r + 1))
@@ -138,7 +145,8 @@ static void draw_cols(int r, int sc, int ec)
 			_draw_pos(r, i, 0);
 }
 
-static void draw_char(int ch, int r, int c)
+static void
+draw_char(int ch, int r, int c)
 {
 	int i = OFFSET(r, c);
 	screen[i] = ch;
@@ -148,19 +156,22 @@ static void draw_char(int ch, int r, int c)
 		_draw_pos(r, c, 0);
 }
 
-static void draw_cursor(int put)
+static void
+draw_cursor(int put)
 {
 	if (candraw(row, row + 1))
 		_draw_pos(row, col, put);
 }
 
-static void lazy_start(void)
+static void
+lazy_start(void)
 {
 	memset(dirty, 0, pad_rows() * sizeof(*dirty));
 	lazy = 1;
 }
 
-static void lazy_flush(void)
+static void
+lazy_flush(void)
 {
 	int i;
 	if (!visible || !lazy)
@@ -174,7 +185,8 @@ static void lazy_flush(void)
 	term->hpos = 0;
 }
 
-static void screen_reset(int i, int n)
+static void
+screen_reset(int i, int n)
 {
 	int c;
 	candraw(i / pad_cols(), (i + n) / pad_cols() + 1);
@@ -185,7 +197,8 @@ static void screen_reset(int i, int n)
 		bgs[i + c] = bg;
 }
 
-static void screen_move(int dst, int src, int n)
+static void
+screen_move(int dst, int src, int n)
 {
 	int srow = (MIN(src, dst) + (n > 0 ? 0 : n)) / pad_cols();
 	int drow = (MAX(src, dst) + (n > 0 ? n : 0)) / pad_cols() + 1;
@@ -203,7 +216,8 @@ static char ptybuf[PTYLEN];		/* always emptied in term_read() */
 static int ptylen;			/* buffer length */
 static int ptycur;			/* current offset */
 
-static int waitpty(int us)
+static int
+waitpty(int us)
 {
 	struct pollfd ufds[1];
 	ufds[0].fd = term->fd;
@@ -211,7 +225,8 @@ static int waitpty(int us)
 	return poll(ufds, 1, us) <= 0;
 }
 
-static int readpty(void)
+static int
+readpty(void)
 {
 	int nr;
 	if (ptycur < ptylen)
@@ -229,28 +244,34 @@ static int readpty(void)
 
 /* term interface functions */
 
-void term_send(int c)
+void
+term_send(int c)
 {
 	char b = c;
 	if (term->fd)
 		write(term->fd, &b, 1);
 }
 
-static void term_sendstr(char *s)
+static void
+term_sendstr(char *s)
 {
 	if (term->fd)
 		write(term->fd, s, strlen(s));
 }
 
-static void term_blank(void)
+static void
+term_blank(void)
 {
 	screen_reset(0, pad_rows() * pad_cols());
 	if (visible)
 		pad_fill(0, -1, 0, -1, bgcolor() & FN_C);
 }
 
-static void ctlseq(void);
-void term_read(void)
+static void
+ctlseq(void);
+
+void
+term_read(void)
 {
 	ctlseq();
 	while (ptycur < ptylen) {
@@ -261,7 +282,8 @@ void term_read(void)
 	lazy_flush();
 }
 
-static void term_reset(void)
+static void
+term_reset(void)
 {
 	row = col = 0;
 	top = 0;
@@ -272,7 +294,8 @@ static void term_reset(void)
 	term_blank();
 }
 
-static int _openpty(int *master, int *slave)
+static int
+_openpty(int *master, int *slave)
 {
 	int unlock = 0;
 	int ptyno = 0;
@@ -288,7 +311,8 @@ static int _openpty(int *master, int *slave)
 	return 0;
 }
 
-static void _login(int fd)
+static void
+_login(int fd)
 {
 	struct winsize winp;
 	winp.ws_col = pad_cols();
@@ -307,14 +331,16 @@ static void _login(int fd)
 
 #define MAXENV		(1 << 8)
 
-static void envcpy(char **d, char **s)
+static void
+envcpy(char **d, char **s)
 {
 	while (*s)
 		*d++ = *s++;
 	*d = NULL;
 }
 
-static void execvep(char *cmd, char **argv, char **envp)
+static void
+execvep(char *cmd, char **argv, char **envp)
 {
 	char path[512];
 	char *p = getenv("PATH");
@@ -332,7 +358,8 @@ static void execvep(char *cmd, char **argv, char **envp)
 }
 
 extern char **environ;
-void term_exec(char **args)
+void
+term_exec(char **args)
 {
 	int master, slave;
 	memset(term, 0, sizeof(*term));
@@ -356,7 +383,8 @@ void term_exec(char **args)
 	memset(term->hist, 0, sizeof(term->hist));
 }
 
-static void misc_save(struct term_state *state)
+static void
+misc_save(struct term_state *state)
 {
 	state->row = row;
 	state->col = col;
@@ -365,7 +393,8 @@ static void misc_save(struct term_state *state)
 	state->mode = mode;
 }
 
-static void misc_load(struct term_state *state)
+static void
+misc_load(struct term_state *state)
 {
 	row = state->row;
 	col = state->col;
@@ -374,7 +403,8 @@ static void misc_load(struct term_state *state)
 	mode = state->mode;
 }
 
-void term_save(struct term *term)
+void
+term_save(struct term *term)
 {
 	visible = 0;
 	if (!lazy)
@@ -386,7 +416,8 @@ void term_save(struct term *term)
 }
 
 /* redraw the screen; if all is zero, update changed lines only */
-void term_redraw(int all)
+void
+term_redraw(int all)
 {
 	if (term->fd) {
 		if (all) {
@@ -402,7 +433,8 @@ void term_redraw(int all)
 	}
 }
 
-void term_load(struct term *t, int flags)
+void
+term_load(struct term *t, int flags)
 {
 	term = t;
 	misc_load(&term->cur);
@@ -416,7 +448,8 @@ void term_load(struct term *t, int flags)
 	dirty = term->dirty;
 }
 
-void term_end(void)
+void
+term_end(void)
 {
 	if (term->fd)
 		close(term->fd);
@@ -426,7 +459,8 @@ void term_end(void)
 		term_redraw(1);
 }
 
-static int writeutf8(char *dst, int c)
+static int
+writeutf8(char *dst, int c)
 {
 	char *d = dst;
 	int l;
@@ -448,7 +482,8 @@ static int writeutf8(char *dst, int c)
 	return d - dst;
 }
 
-void term_screenshot(void)
+void
+term_screenshot(void)
 {
 	char buf[1 << 11];
 	int fd = open(SCRSHOT, O_CREAT | O_TRUNC | O_WRONLY, 0600);
@@ -466,12 +501,14 @@ void term_screenshot(void)
 
 /* high-level drawing functions */
 
-static void empty_rows(int sr, int er)
+static void
+empty_rows(int sr, int er)
 {
 	screen_reset(OFFSET(sr, 0), (er - sr) * pad_cols());
 }
 
-static void blank_rows(int sr, int er)
+static void
+blank_rows(int sr, int er)
 {
 	empty_rows(sr, er);
 	draw_rows(sr, er);
@@ -480,7 +517,8 @@ static void blank_rows(int sr, int er)
 
 #define HISTROW(pos)	(term->hist + ((term->hrow + NHIST - (pos)) % NHIST) * pad_cols())
 
-static void scrl_rows(int nr)
+static void
+scrl_rows(int nr)
 {
 	int i;
 	for (i = 0; i < nr; i++) {
@@ -490,7 +528,8 @@ static void scrl_rows(int nr)
 	}
 }
 
-void term_scrl(int scrl)
+void
+term_scrl(int scrl)
 {
 	int i, j;
 	int hpos = LIMIT(term->hpos + scrl, 0, NHIST);
@@ -512,7 +551,8 @@ void term_scrl(int scrl)
 	}
 }
 
-static void scroll_screen(int sr, int nr, int n)
+static void
+scroll_screen(int sr, int nr, int n)
 {
 	draw_cursor(0);
 	if (sr + n == 0)
@@ -526,7 +566,8 @@ static void scroll_screen(int sr, int nr, int n)
 	draw_cursor(1);
 }
 
-static void insert_lines(int n)
+static void
+insert_lines(int n)
 {
 	int sr = MAX(top, row);
 	int nr = bot - row - n;
@@ -534,7 +575,8 @@ static void insert_lines(int n)
 		scroll_screen(sr, nr, n);
 }
 
-static void delete_lines(int n)
+static void
+delete_lines(int n)
 {
 	int r = MAX(top, row);
 	int sr = r + n;
@@ -543,12 +585,14 @@ static void delete_lines(int n)
 		scroll_screen(sr, nr, -n);
 }
 
-static int origin(void)
+static int
+origin(void)
 {
 	return mode & MODE_ORIGIN;
 }
 
-static void move_cursor(int r, int c)
+static void
+move_cursor(int r, int c)
 {
 	int t, b;
 	draw_cursor(0);
@@ -560,7 +604,8 @@ static void move_cursor(int r, int c)
 	mode = BIT_SET(mode, MODE_WRAPREADY, 0);
 }
 
-static void set_region(int t, int b)
+static void
+set_region(int t, int b)
 {
 	top = LIMIT(t - 1, 0, pad_rows() - 1);
 	bot = LIMIT(b ? b : pad_rows(), top + 1, pad_rows());
@@ -568,7 +613,8 @@ static void set_region(int t, int b)
 		move_cursor(top, 0);
 }
 
-static void setattr(int m)
+static void
+setattr(int m)
 {
 	if (!m || (m / 10) == 3)
 		mode |= MODE_CLR8;
@@ -608,7 +654,8 @@ static void setattr(int m)
 	}
 }
 
-static void kill_chars(int sc, int ec)
+static void
+kill_chars(int sc, int ec)
 {
 	int i;
 	for (i = sc; i < ec; i++)
@@ -616,7 +663,8 @@ static void kill_chars(int sc, int ec)
 	draw_cursor(1);
 }
 
-static void move_chars(int sc, int nc, int n)
+static void
+move_chars(int sc, int nc, int n)
 {
 	draw_cursor(0);
 	screen_move(OFFSET(row, sc + n), OFFSET(row, sc), nc);
@@ -628,20 +676,23 @@ static void move_chars(int sc, int nc, int n)
 	draw_cursor(1);
 }
 
-static void delete_chars(int n)
+static void
+delete_chars(int n)
 {
 	int sc = col + n;
 	int nc = pad_cols() - sc;
 	move_chars(sc, nc, -n);
 }
 
-static void insert_chars(int n)
+static void
+insert_chars(int n)
 {
 	int nc = pad_cols() - col - n;
 	move_chars(col, nc, n);
 }
 
-static void advance(int dr, int dc, int scrl)
+static void
+advance(int dr, int dc, int scrl)
 {
 	int r = row + dr;
 	int c = col + dc;
@@ -662,7 +713,8 @@ static void advance(int dr, int dc, int scrl)
 	move_cursor(r, c);
 }
 
-static void insertchar(int c)
+static void
+insertchar(int c)
 {
 	if (mode & MODE_WRAPREADY)
 		advance(1, -col, 1);
@@ -691,7 +743,8 @@ static void modeseq(int c, int set);
 
 /* comments taken from: http://www.ivarch.com/programs/termvt102.shtml */
 
-static int readutf8(int c)
+static int
+readutf8(int c)
 {
 	int result;
 	int l = 1;
@@ -708,7 +761,8 @@ static int readutf8(int c)
 #define unknown(ctl, c)
 
 /* control sequences */
-static void ctlseq(void)
+static void
+ctlseq(void)
 {
 	int c = readpty();
 	switch (c) {
@@ -761,7 +815,8 @@ static void ctlseq(void)
 #define ESCF(c)		((c) > 0x30 && (c) < 0x7f)
 
 /* escape sequences */
-static void escseq(void)
+static void
+escseq(void)
 {
 	int c = readpty();
 	while (ESCM(c))
@@ -828,7 +883,8 @@ static void escseq(void)
 	}
 }
 
-static void escseq_cs(void)
+static void
+escseq_cs(void)
 {
 	int c = readpty();
 	switch (c) {
@@ -841,7 +897,8 @@ static void escseq_cs(void)
 	}
 }
 
-static void escseq_g0(void)
+static void
+escseq_g0(void)
 {
 	int c = readpty();
 	switch (c) {
@@ -856,7 +913,8 @@ static void escseq_g0(void)
 	}
 }
 
-static void escseq_g1(void)
+static void
+escseq_g1(void)
 {
 	int c = readpty();
 	switch (c) {
@@ -871,7 +929,8 @@ static void escseq_g1(void)
 	}
 }
 
-static void escseq_g2(void)
+static void
+escseq_g2(void)
 {
 	int c = readpty();
 	switch (c) {
@@ -885,7 +944,8 @@ static void escseq_g2(void)
 	}
 }
 
-static void escseq_g3(void)
+static void
+escseq_g3(void)
 {
 	int c = readpty();
 	switch (c) {
@@ -899,7 +959,8 @@ static void escseq_g3(void)
 	}
 }
 
-static int absrow(int r)
+static int
+absrow(int r)
 {
 	return origin() ? top + r : r;
 }
@@ -910,13 +971,14 @@ static int absrow(int r)
 
 #define MAXCSIARGS	32
 /* ECMA-48 CSI sequences */
-static void csiseq(void)
+static void
+csiseq(void)
 {
 	int args[MAXCSIARGS + 8] = {0};
 	int i;
 	int n = 0;
 	int c = readpty();
-	int priv = 0;
+	char priv = 0;
 
 	if (strchr("<=>?", c)) {
 		priv = c;
@@ -1073,7 +1135,8 @@ static void csiseq(void)
 	}
 }
 
-static void csiseq_da(int c)
+static void
+csiseq_da(int c)
 {
 	switch (c) {
 	case 0x00:
@@ -1086,7 +1149,8 @@ static void csiseq_da(int c)
 	}
 }
 
-static void csiseq_dsr(int c)
+static void
+csiseq_dsr(int c)
 {
 	char status[1 << 5];
 	switch (c) {
@@ -1105,7 +1169,8 @@ static void csiseq_dsr(int c)
 }
 
 /* ANSI/DEC specified modes for SM/RM ANSI Specified Modes */
-static void modeseq(int c, int set)
+static void
+modeseq(int c, int set)
 {
 	switch (c) {
 	case 0x87:	/* DECAWM	Auto Wrap */

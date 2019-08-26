@@ -27,31 +27,34 @@
 #include <termios.h>
 #include <unistd.h>
 #include <linux/vt.h>
+#include <stdbool.h>
+#include <stdlib.h>
 #include "conf.h"
 #include "fbpad.h"
 #include "draw.h"
 
-#define CTRLKEY(x)	((x) - 96)
-#define POLLFLAGS	(POLLIN | POLLHUP | POLLERR | POLLNVAL)
-#define NTAGS		(sizeof(tags) - 1)
-#define NTERMS		(NTAGS * 2)
-#define TERMOPEN(i)	(terms[i].fd)
-#define TERMSNAP(i)	(strchr(TAGS_SAVED, tags[(i) % NTAGS]))
+#define CTRLKEY(x)  ((x) - 96)
+#define POLLFLAGS   (POLLIN | POLLHUP | POLLERR | POLLNVAL)
+#define NTAGS       (sizeof(tags) - 1)
+#define NTERMS      (NTAGS * 2)
+#define TERMOPEN(i) (terms[i].fd)
+#define TERMSNAP(i) (strchr(TAGS_SAVED, tags[(i) % NTAGS]))
 
 static char tags[] = TAGS;
 static struct term terms[NTERMS];
-static int tops[NTAGS];		/* top terms of tags */
-static int ctag;		/* current tag */
-static int ltag;		/* the last tag */
-static int exitit;
-static int hidden;		/* do not touch the framebuffer */
+static int tops[NTAGS];   /* top terms of tags */
+static int ctag;          /* current tag */
+static int ltag;          /* the last tag */
+static bool exitit;
+static int hidden;        /* do not touch the framebuffer */
 static int locked;
-static int taglock;		/* disable tag switching */
+static int taglock;       /* disable tag switching */
 static char pass[1024];
 static int passlen;
-static int cmdmode;		/* execute a command and exit */
+static bool cmdmode;       /* execute a command and exit */
 
-static int readchar(void)
+static int
+readchar(void)
 {
 	char b;
 	if (read(0, &b, 1) > 0)
@@ -59,17 +62,20 @@ static int readchar(void)
 	return -1;
 }
 
-static int cterm(void)
+static int
+cterm(void)
 {
 	return tops[ctag] * NTAGS + ctag;
 }
 
-static int altterm(int n)
+static int
+altterm(int n)
 {
 	return n < NTAGS ? n + NTAGS : n - NTAGS;
 }
 
-static int nextterm(void)
+static int
+nextterm(void)
 {
 	int n = (cterm() + 1) % NTERMS;
 	while (n != cterm()) {
@@ -80,12 +86,14 @@ static int nextterm(void)
 	return n;
 }
 
-static struct term *mainterm(void)
+static struct term*
+mainterm(void)
 {
 	return TERMOPEN(cterm()) ? &terms[cterm()] : NULL;
 }
 
-static void switchterm(int oidx, int nidx, int show, int save, int load)
+static void
+switchterm(int oidx, int nidx, int show, int save, int load)
 {
 	if (save && TERMOPEN(oidx) && TERMSNAP(oidx))
 		scr_snap(oidx);
@@ -96,7 +104,8 @@ static void switchterm(int oidx, int nidx, int show, int save, int load)
 					scr_load(nidx)));
 }
 
-static void showterm(int n)
+static void
+showterm(int n)
 {
 	if (cterm() == n || cmdmode)
 		return;
@@ -109,18 +118,21 @@ static void showterm(int n)
 	tops[ctag] = n / NTAGS;
 }
 
-static void showtag(int n)
+static void
+showtag(int n)
 {
 	showterm(tops[n] * NTAGS + n);
 }
 
-static void execterm(char **args)
+static void
+execterm(char **args)
 {
 	if (!mainterm())
 		term_exec(args);
 }
 
-static void listtags(void)
+static void
+listtags(void)
 {
 	/* colors for tags based on their number of terminals */
 	int colors[] = {COLOR7, FGCOLOR, FGCOLOR | FN_B};
@@ -148,7 +160,8 @@ static void listtags(void)
 	}
 }
 
-static void directkey(void)
+static void
+directkey(void)
 {
 	char *shell[32] = SHELL;
 	char *mail[32] = MAIL;
@@ -192,7 +205,7 @@ static void directkey(void)
 				showterm(nextterm());
 			return;
 		case CTRLKEY('q'):
-			exitit = 1;
+			exitit = true;
 			return;
 		case 's':
 			term_screenshot();
@@ -226,19 +239,22 @@ static void directkey(void)
 		term_send(c);
 }
 
-static void peepterm(int termid)
+static void
+peepterm(int termid)
 {
 	if (termid != cterm())
 		switchterm(cterm(), termid, 0, 0, 0);
 }
 
-static void peepback(int termid)
+static void
+peepback(int termid)
 {
 	if (termid != cterm())
 		switchterm(termid, cterm(), !hidden, 0, 0);
 }
 
-static int pollterms(void)
+static bool
+pollterms(void)
 {
 	struct pollfd ufds[NTERMS + 1];
 	int term_idx[NTERMS + 1];
@@ -254,9 +270,9 @@ static int pollterms(void)
 		}
 	}
 	if (poll(ufds, n, 1000) < 1)
-		return 0;
+		return false;
 	if (ufds[0].revents & (POLLFLAGS & ~POLLIN))
-		return 1;
+		return true;
 	if (ufds[0].revents & POLLIN)
 		directkey();
 	for (i = 1; i < n; i++) {
@@ -269,14 +285,15 @@ static int pollterms(void)
 			scr_free(term_idx[i]);
 			term_end();
 			if (cmdmode)
-				exitit = 1;
+				exitit = true;
 		}
 		peepback(term_idx[i]);
 	}
-	return 0;
+	return false;
 }
 
-static void mainloop(char **args)
+static void
+mainloop(char **args)
 {
 	struct termios oldtermios, termios;
 	tcgetattr(0, &termios);
@@ -286,7 +303,7 @@ static void mainloop(char **args)
 	term_load(&terms[cterm()], 1);
 	term_redraw(1);
 	if (args) {
-		cmdmode = 1;
+		cmdmode = true;
 		execterm(args);
 	}
 	while (!exitit)
@@ -295,7 +312,8 @@ static void mainloop(char **args)
 	tcsetattr(0, 0, &oldtermios);
 }
 
-static void signalreceived(int n)
+static void
+signalreceived(int n)
 {
 	if (exitit)
 		return;
@@ -311,13 +329,13 @@ static void signalreceived(int n)
 		switchterm(cterm(), cterm(), 1, 0, 1);
 		break;
 	case SIGCHLD:
-		while (waitpid(-1, NULL, WNOHANG) > 0)
-			;
+		while (waitpid(-1, NULL, WNOHANG) > 0);
 		break;
 	}
 }
 
-static void signalsetup(void)
+static void
+signalsetup(void)
 {
 	struct vt_mode vtm;
 	vtm.mode = VT_PROCESS;
@@ -331,22 +349,23 @@ static void signalsetup(void)
 	ioctl(0, VT_SETMODE, &vtm);
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
 	char *hide = "\x1b[2J\x1b[H\x1b[?25l";
 	char *show = "\x1b[?25h";
 	char **args = argv + 1;
-	if (fb_init(FBDEV)) {
+	if (fb_init(FBDEV) == EXIT_FAILURE) {
 		fprintf(stderr, "fbpad: failed to initialize the framebuffer\n");
-		return 1;
+		return EXIT_FAILURE;
 	}
 	if (sizeof(fbval_t) != FBM_BPP(fb_mode())) {
 		fprintf(stderr, "fbpad: fbval_t does not match framebuffer depth\n");
-		return 1;
+		return EXIT_FAILURE;
 	}
 	if (pad_init()) {
 		fprintf(stderr, "fbpad: cannot find fonts\n");
-		return 1;
+		return EXIT_FAILURE;
 	}
 	write(1, hide, strlen(hide));
 	signalsetup();
@@ -358,5 +377,5 @@ int main(int argc, char **argv)
 	pad_free();
 	scr_done();
 	fb_free();
-	return 0;
+	return EXIT_SUCCESS;
 }

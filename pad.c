@@ -10,7 +10,8 @@ static int rows, cols;
 static int fnrows, fncols;
 static struct font *fonts[3];
 
-int pad_init(void)
+int
+pad_init(void)
 {
 	if (pad_font(FR, FI, FB))
 		return 1;
@@ -19,7 +20,8 @@ int pad_init(void)
 	return 0;
 }
 
-void pad_free(void)
+void
+pad_free(void)
 {
 	int i;
 	for (i = 0; i < 3; i++)
@@ -32,7 +34,8 @@ void pad_free(void)
 #define CB(a)		((a) & 0x0000ff)
 #define COLORMERGE(f, b, c)		((b) + (((f) - (b)) * (c) >> 8u))
 
-static unsigned mixed_color(int fg, int bg, unsigned val)
+static unsigned
+mixed_color(int fg, int bg, unsigned val)
 {
 	unsigned char r = COLORMERGE(CR(fg), CR(bg), val);
 	unsigned char g = COLORMERGE(CG(fg), CG(bg), val);
@@ -40,7 +43,8 @@ static unsigned mixed_color(int fg, int bg, unsigned val)
 	return FB_VAL(r, g, b);
 }
 
-static unsigned color2fb(int c)
+static unsigned
+color2fb(int c)
 {
 	return FB_VAL(CR(c), CG(c), CB(c));
 }
@@ -57,7 +61,8 @@ static struct glyph {
 	int fg, bg;
 } gc_info[GCLCNT][GCLLEN];
 
-static fbval_t *gc_get(int c, int fg, int bg)
+static fbval_t*
+gc_get(int c, int fg, int bg)
 {
 	struct glyph *g = gc_info[GCIDX(c)];
 	int i;
@@ -67,7 +72,8 @@ static fbval_t *gc_get(int c, int fg, int bg)
 	return NULL;
 }
 
-static fbval_t *gc_put(int c, int fg, int bg)
+static fbval_t*
+gc_put(int c, int fg, int bg)
 {
 	int idx = GCIDX(c);
 	int pos = gc_next[idx]++;
@@ -80,7 +86,8 @@ static fbval_t *gc_put(int c, int fg, int bg)
 	return gc_mem[idx][pos];
 }
 
-static void bmp2fb(fbval_t *d, char *s, int fg, int bg, int nr, int nc)
+static void
+bmp2fb(fbval_t *d, char *s, int fg, int bg, int nr, int nc)
 {
 	int i, j;
 	for (i = 0; i < fnrows; i++) {
@@ -92,7 +99,8 @@ static void bmp2fb(fbval_t *d, char *s, int fg, int bg, int nr, int nc)
 	}
 }
 
-static fbval_t *ch2fb(int fn, int c, int fg, int bg)
+static fbval_t*
+ch2fb(int fn, int c, int fg, int bg)
 {
 	char bits[NDOTS];
 	fbval_t *fbbits;
@@ -108,13 +116,15 @@ static fbval_t *ch2fb(int fn, int c, int fg, int bg)
 	return fbbits;
 }
 
-static void fb_set(int r, int c, void *mem, int len)
+static void
+fb_set(int r, int c, void *mem, int len)
 {
 	int bpp = FBM_BPP(fb_mode());
 	memcpy(fb_mem(r) + c * bpp, mem, len * bpp);
 }
 
-static void fb_box(int sr, int er, int sc, int ec, fbval_t val)
+static void
+fb_box(int sr, int er, int sc, int ec, fbval_t val)
 {
 	static fbval_t line[32 * NCOLS];
 	int i;
@@ -124,7 +134,8 @@ static void fb_box(int sr, int er, int sc, int ec, fbval_t val)
 		fb_set(i, sc, line, ec - sc);
 }
 
-static int fnsel(int fg, int bg)
+static int
+fnsel(int fg, int bg)
 {
 	if ((fg | bg) & FN_B)
 		return fonts[2] ? 2 : 0;
@@ -133,7 +144,8 @@ static int fnsel(int fg, int bg)
 	return 0;
 }
 
-void pad_put(int ch, int r, int c, int fg, int bg)
+void
+pad_put(int ch, int r, int c, int fg, int bg)
 {
 	int sr = fnrows * r;
 	int sc = fncols * c;
@@ -149,24 +161,28 @@ void pad_put(int ch, int r, int c, int fg, int bg)
 			fb_set(sr + i, sc, bits + (i * fncols), fncols);
 }
 
-void pad_fill(int sr, int er, int sc, int ec, int c)
+void
+pad_fill(int sr, int er, int sc, int ec, int c)
 {
 	int fber = er >= 0 ? er * fnrows : fb_rows();
 	int fbec = ec >= 0 ? ec * fncols : fb_cols();
 	fb_box(sr * fnrows, fber, sc * fncols, fbec, color2fb(c & FN_C));
 }
 
-int pad_rows(void)
+int
+pad_rows(void)
 {
 	return rows;
 }
 
-int pad_cols(void)
+int
+pad_cols(void)
 {
 	return cols;
 }
 
-int pad_font(char *fr, char *fi, char *fb)
+int
+pad_font(char *fr, char *fi, char *fb)
 {
 	struct font *r = fr ? font_open(fr) : NULL;
 	if (!r)

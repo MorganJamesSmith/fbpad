@@ -64,7 +64,8 @@ static int zwchars[][2] = {
 	{0x1d185, 0x1d18b}, {0x1d1aa, 0x1d1ad}, {0x1d242, 0x1d244}, {0xe0100, 0xe01ef}
 };
 
-static int find(int c, int tab[][2], int n)
+static int
+find(int c, int tab[][2], int n)
 {
 	int l = 0;
 	int h = n - 1;
@@ -84,13 +85,15 @@ static int find(int c, int tab[][2], int n)
 }
 
 /* double-width characters */
-int isdw(int c)
+int
+isdw(int c)
 {
 	return c >= 0x1100 && find(c, dwchars, LEN(dwchars));
 }
 
 /* zero-width and combining characters */
-int iszw(int c)
+int
+iszw(int c)
 {
 	return c >= 0x0300 && find(c, zwchars, LEN(zwchars));
 }

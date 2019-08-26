@@ -2,13 +2,13 @@
 #define FBDEV		"/dev/fb0"
 
 /* list of tags */
-#define TAGS		"xnlhtr01uiva-"
+#define TAGS		"123456789"
 #define TAGS_SAVED	""
 
 /* programs mapped to m-c, m-m, m-e */
-#define SHELL		{"sh"}
-#define EDITOR		{"vi"}
-#define MAIL		{"mailx", "-f", "+inbox"}
+#define SHELL		{"bash"}
+#define EDITOR		{"nvim"}
+#define MAIL		{"neomutt"}
 
 /* TERM variable for launched programs */
 #define TERM        "linux"
@@ -17,13 +17,13 @@
 typedef unsigned int fbval_t;
 
 /* tinyfont files for regular, italic, and bold fonts */
-#define FR		"/path/to/font.tf"
+#define FR		"/usr/share/fonts/tinyfonts/courr.tf"
 #define FI		NULL
 #define FB		NULL
 
 /* foreground and background colors */
-#define FGCOLOR		COLOR0
-#define BGCOLOR		COLORF
+#define FGCOLOR		COLORF
+#define BGCOLOR		COLOR0
 
 /* where to write the screen shot */
 #define SCRSHOT		"/tmp/scr"
